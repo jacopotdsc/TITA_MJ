@@ -3,30 +3,35 @@ project(TITA_MJ)
 
 set(CMAKE_CXX_STANDARD 17)
 
+#set(MUJOCO_LIBRARY "/home/ubuntu/Desktop/repo_rl/TITA_MJ/.pixi/build/work/tita_mj-f6yTh76OkK4-*/host_placehold*/lib/libmujoco.so")
+#set(MUJOCO_INCLUDE_DIR "/home/ubuntu/Desktop/repo_rl/TITA_MJ/.pixi/build/work/tita_mj-f6yTh76OkK4-*/host_placehold*/include")
 
 find_package(glfw3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-set(MUJOCO_DIR "$ENV{HOME}/mujoco" CACHE PATH "MuJoCo base directory")
-set(MUJOCO_INCLUDE_DIR "${MUJOCO_DIR}/include")
-set(MUJOCO_BUILD_DIR "${MUJOCO_DIR}/build")
-set(MUJOCO_BIN_DIR "${MUJOCO_DIR}/bin")
-set(MUJOCO_LIB_PATH "${MUJOCO_BUILD_DIR}")
+find_package(mujoco CONFIG QUIET)
+if(TARGET mujoco::mujoco)
+    message(STATUS "MuJoCo found: using mujoco::mujoco")
+else()
+    # prova fallback su percorso Pixi
+    set(MUJOCO_PATH "$ENV{HOME}/.pixi/build/work/.../host_placehold*/lib")
+    find_library(MUJOCO_LIBRARY NAMES mujoco PATHS ${MUJOCO_PATH})
+    if(NOT MUJOCO_LIBRARY)
+        message(FATAL_ERROR "MuJoCo library not found in ${MUJOCO_PATH}")
+    endif()
+    add_library(mujoco::mujoco UNKNOWN IMPORTED)
+    set_target_properties(mujoco::mujoco PROPERTIES IMPORTED_LOCATION ${MUJOCO_LIBRARY})
+endif()
+
+#set(MUJOCO_LIBRARY "$ENV{HOME}/.pixi/envs/default/lib/libmujoco.so")
+#set(MUJOCO_INCLUDE_DIR "$ENV{HOME}/.pixi/envs/default/include")
 
 include_directories(${MUJOCO_INCLUDE_DIR})
-link_directories(${MUJOCO_LIB_PATH})
 
-# Try to find libmujoco in the expected build directory first, fall back to
-# standard locations if necessary
-find_library(MUJOCO_LIBRARY
-    NAMES mujoco
-    PATHS ${MUJOCO_LIB_PATH} ${MUJOCO_BIN_DIR}
-    NO_DEFAULT_PATH
-)
 if(NOT MUJOCO_LIBRARY)
-    find_library(MUJOCO_LIBRARY NAMES mujoco)
+    message(FATAL_ERROR "Cannot find MuJoCo library in ${MUJOCO_LIB_DIR}")
 endif()
 
 
@@ -35,6 +40,10 @@ set(blasfeo_INCLUDE_DIRS /home/ubuntu/.local/blasfeo/include)
 set(hpipm_INCLUDE_DIRS /home/ubuntu/.local/hpipm/include)
 set(blasfeo_LIBRARIES /home/ubuntu/.local/blasfeo/lib/libblasfeo.a)
 set(hpipm_LIBRARIES /home/ubuntu/.local/hpipm/lib/libhpipm.a)
+
+
+#include_directories(${BLASFEO_INCLUDE_DIR} ${HPIPM_INCLUDE_DIR})
+#include_directories(${PROJECT_SOURCE_DIR}/include $ENV{HOME}/.local/include)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
@@ -46,32 +55,19 @@ add_library(mpc MODULE
     src/pybind_mpc.cpp
 )
 
-#target_link_libraries(wholebody PRIVATE
-#    pybind11::module
-#    pinocchio::pinocchio
-#    Eigen3::Eigen
-#    $ENV{HOME}/.local/lib/libblasfeo.a
-#    $ENV{HOME}/.local/lib/libhpipm.a
-#)
-
-
-#target_link_libraries(mpc PRIVATE pybind11::module pinocchio::pinocchio Eigen3::Eigen)
-# Non serve prefisso "lib" per modulo Python
-#set_target_properties(mpc PROPERTIES PREFIX "")
-
-
 add_library(wbc MODULE
+    src/JointCommand.cpp
+    src/JointState.cpp
+    src/MPC.cpp
+    src/RobotState.cpp
+    src/SE3.cpp
+    src/WalkingManager.cpp
     src/WholeBodyController.cpp
     src/utils.cpp 
     src/pybind_wbc.cpp
 )
 
-#target_link_libraries(wbc PRIVATE pybind11::module pinocchio::pinocchio Eigen3::Eigen)
-# Non serve prefisso "lib" per modulo Python
-#set_target_properties(wbc PROPERTIES PREFIX "")
-
-
-# MPC
+# WBC
 target_link_libraries(mpc PRIVATE
     pybind11::module
     pinocchio::pinocchio
@@ -80,12 +76,11 @@ target_link_libraries(mpc PRIVATE
     $ENV{HOME}/.local/lib/libblasfeo.a
 )
 set_target_properties(mpc PROPERTIES 
-    PREFIX ""
-    #LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+    PREFIX "")
 
 # WBC
 target_link_libraries(wbc PRIVATE
+    mujoco::mujoco
     pybind11::module
     pinocchio::pinocchio
     Eigen3::Eigen
@@ -95,9 +90,7 @@ target_link_libraries(wbc PRIVATE
 
 set_target_properties(wbc PROPERTIES 
     PREFIX ""
-    #LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
-
 
 install(TARGETS mpc wbc
         LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/compiled)

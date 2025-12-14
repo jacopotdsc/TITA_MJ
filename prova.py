@@ -4,6 +4,7 @@ sys.path.insert(0, '/home/ubuntu/Desktop/repo_rl//TITA_MJ/compiled')
 import mpc
 import wbc
 import numpy as np
+import pinocchio
 
 x0 = np.zeros(10)
 x0[2]=0.4
@@ -13,7 +14,7 @@ s=m.get_solution()
 print('COM pos', s['com_pos'])
 
 
-params = wbc.WholeBodyControllerParams()  # o creare i campi necessari
+params = wbc.WholeBodyControllerParams.getDefaultParams()  # o creare i campi necessari
 robot_model = pinocchio.buildSampleModelHumanoid()  # esempio, usa il tuo modello
 initial_robot_state = wbc.RobotState()  # setta posizione e velocità iniziali
 sample_time = 0.001  # esempio
