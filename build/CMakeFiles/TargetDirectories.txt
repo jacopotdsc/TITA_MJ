@@ -1,4 +1,0 @@
-/home/ubuntu/Desktop/repo_rl/TITA_MJ/build/CMakeFiles/mpc.dir
-/home/ubuntu/Desktop/repo_rl/TITA_MJ/build/CMakeFiles/wbc.dir
-/home/ubuntu/Desktop/repo_rl/TITA_MJ/build/CMakeFiles/edit_cache.dir
-/home/ubuntu/Desktop/repo_rl/TITA_MJ/build/CMakeFiles/rebuild_cache.dir

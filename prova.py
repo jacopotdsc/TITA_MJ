@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/home/ubuntu/Desktop/repo_rl/TITA-dynamic-obstacle-avoidance/TITA_MJ/build')
+sys.path.insert(0, '/home/ubuntu/Desktop/repo_rl//TITA_MJ/compiled')
 
 import mpc
 import wbc

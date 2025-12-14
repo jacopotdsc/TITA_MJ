@@ -9,17 +9,25 @@ find_package(pinocchio REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-set(MUJOCO_DIR "/home/ubuntu/mujoco")
+set(MUJOCO_DIR "$ENV{HOME}/mujoco" CACHE PATH "MuJoCo base directory")
 set(MUJOCO_INCLUDE_DIR "${MUJOCO_DIR}/include")
-set(MUJOCO_LIB_DIR "${MUJOCO_DIR}/build") 
-set(MUJOCO_LIB_DIR "${MUJOCO_DIR}/bin") 
-set(MUJOCO_LIB_PATH "$ENV{HOME}/mujoco/build/lib")
+set(MUJOCO_BUILD_DIR "${MUJOCO_DIR}/build")
+set(MUJOCO_BIN_DIR "${MUJOCO_DIR}/bin")
+set(MUJOCO_LIB_PATH "${MUJOCO_BUILD_DIR}")
 
 include_directories(${MUJOCO_INCLUDE_DIR})
-link_directories(${MUJOCO_LIB_DIR})
+link_directories(${MUJOCO_LIB_PATH})
 
-include_directories($ENV{HOME}/mujoco/include)
-link_directories($ENV{HOME}/mujoco/build/lib)
+# Try to find libmujoco in the expected build directory first, fall back to
+# standard locations if necessary
+find_library(MUJOCO_LIBRARY
+    NAMES mujoco
+    PATHS ${MUJOCO_LIB_PATH} ${MUJOCO_BIN_DIR}
+    NO_DEFAULT_PATH
+)
+if(NOT MUJOCO_LIBRARY)
+    find_library(MUJOCO_LIBRARY NAMES mujoco)
+endif()
 
 
 # Manually set INCLUDE_DIRS and LIBRARIES since not handled in blasfeo and hpipm
@@ -71,7 +79,10 @@ target_link_libraries(mpc PRIVATE
     $ENV{HOME}/.local/lib/libhpipm.a
     $ENV{HOME}/.local/lib/libblasfeo.a
 )
-set_target_properties(mpc PROPERTIES PREFIX "")
+set_target_properties(mpc PROPERTIES 
+    PREFIX ""
+    #LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
 
 # WBC
 target_link_libraries(wbc PRIVATE
@@ -80,10 +91,13 @@ target_link_libraries(wbc PRIVATE
     Eigen3::Eigen
     $ENV{HOME}/.local/lib/libhpipm.a
     $ENV{HOME}/.local/lib/libblasfeo.a
-    ${MUJOCO_LIB_PATH}/libmujoco.so
-)
-set_target_properties(wbc PROPERTIES PREFIX "" 
-    INSTALL_RPATH "$ENV{HOME}/mujoco/build/lib"
-    BUILD_WITH_INSTALL_RPATH TRUE
 )
 
+set_target_properties(wbc PROPERTIES 
+    PREFIX ""
+    #LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+
+install(TARGETS mpc wbc
+        LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/compiled)
