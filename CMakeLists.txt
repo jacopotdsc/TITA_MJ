@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 
 #set(MUJOCO_LIBRARY "/home/ubuntu/Desktop/repo_rl/TITA_MJ/.pixi/build/work/tita_mj-f6yTh76OkK4-*/host_placehold*/lib/libmujoco.so")
 #set(MUJOCO_INCLUDE_DIR "/home/ubuntu/Desktop/repo_rl/TITA_MJ/.pixi/build/work/tita_mj-f6yTh76OkK4-*/host_placehold*/include")
+#set(CMAKE_BUILD_RPATH "$ENV{HOME}/.pixi/build/work/./.pixi/build/work/../host_placehold*/work")
+#set(CMAKE_INSTALL_RPATH "$ENV{HOME}/.pixi/build/work/./.pixi/build/work/../host_placehold*/work")
+#set(CMAKE_SKIP_BUILD_RPATH FALSE)
+#set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_package(glfw3 REQUIRED)
 find_package(pinocchio REQUIRED)

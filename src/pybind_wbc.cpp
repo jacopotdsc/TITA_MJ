@@ -8,8 +8,6 @@
 #include <blasfeo_target.h>
 #include <hpipm_d_dense_qp_ipm.h>
 
-
-
 namespace py = pybind11;
 
 PYBIND11_MODULE(wbc, m) {
@@ -49,7 +47,25 @@ PYBIND11_MODULE(wbc, m) {
         .def_readwrite("contact_points", &labrob::RobotState::contact_points)
         .def_readwrite("contact_forces", &labrob::RobotState::contact_forces);
 
-   py::class_<labrob::DesiredConfiguration>(m, "DesiredConfiguration")
+  py::class_<labrob::ee3>(m, "ee3")
+      .def(py::init<>())
+      .def_readwrite("pos", &labrob::ee3::pos)
+      .def_readwrite("vel", &labrob::ee3::vel)
+      .def_readwrite("acc", &labrob::ee3::acc);
+
+  py::class_<labrob::ee_rot>(m, "ee_rot")
+      .def(py::init<>())
+      .def_readwrite("pos", &labrob::ee_rot::pos)
+      .def_readwrite("vel", &labrob::ee_rot::vel)
+      .def_readwrite("acc", &labrob::ee_rot::acc);
+
+  py::class_<labrob::ee6>(m, "ee6")
+      .def(py::init<>())
+      .def_readwrite("pos", &labrob::ee6::pos)
+      .def_readwrite("vel", &labrob::ee6::vel)
+      .def_readwrite("acc", &labrob::ee6::acc);
+      
+  py::class_<labrob::DesiredConfiguration>(m, "DesiredConfiguration")
         .def(py::init<>())
         .def_readwrite("position", &labrob::DesiredConfiguration::position)
         .def_readwrite("orientation", &labrob::DesiredConfiguration::orientation)
@@ -62,12 +78,22 @@ PYBIND11_MODULE(wbc, m) {
         .def_readwrite("lwheel", &labrob::DesiredConfiguration::lwheel)
         .def_readwrite("rwheel", &labrob::DesiredConfiguration::rwheel)
         .def_readwrite("base_link", &labrob::DesiredConfiguration::base_link)
-        .def_readwrite("in_contact", &labrob::DesiredConfiguration::in_contact);
+        .def_readwrite("in_contact", &labrob::DesiredConfiguration::in_contact)
+        .def_property("orientation",
+          [](const labrob::DesiredConfiguration &d) {        // getter
+              Eigen::Vector4d q;
+              q << d.orientation.x(), d.orientation.y(), d.orientation.z(), d.orientation.w();
+              return q;
+          },
+          [](labrob::DesiredConfiguration &d, const Eigen::Vector4d &q) { // setter
+              d.orientation = Eigen::Quaterniond(q[3], q[0], q[1], q[2]); // w, x, y, z
+          });
       
-  py::class_<labrob::WholeBodyController>(m, "WholeBodyController")
+  py::class_<labrob::WholeBodyController, std::unique_ptr<labrob::WholeBodyController>>(m, "WholeBodyController")
     
     .def(py::init([](const  labrob::WholeBodyControllerParams &params,
-                      const pinocchio::Model &robot_model,
+                      const std::string urdf_path,
+                      const std::string mesh_dir,
                       const labrob::RobotState &initial_robot_state,
                       double sample_time,
                       py::dict armature_dict) {
@@ -77,10 +103,31 @@ PYBIND11_MODULE(wbc, m) {
                 armature[item.first.cast<std::string>()] = item.second.cast<double>();
             }
 
-            return labrob::WholeBodyController(params, robot_model, initial_robot_state, sample_time, armature);
+            pinocchio::Model full_robot_model;
+            pinocchio::JointModelFreeFlyer root_joint;
+            pinocchio::urdf::buildModel(
+                urdf_path,
+                root_joint,
+                full_robot_model
+            );
+            const std::vector<std::string> joint_to_lock_names{};
+            std::vector<pinocchio::JointIndex> joint_ids_to_lock;
+            for (const auto& joint_name : joint_to_lock_names) {
+                if (full_robot_model.existJointName(joint_name)) {
+                joint_ids_to_lock.push_back(full_robot_model.getJointId(joint_name));
+                }
+            }
+
+            pinocchio::Model robot_model_ = pinocchio::buildReducedModel(
+                full_robot_model,
+                joint_ids_to_lock,
+                pinocchio::neutral(full_robot_model)
+            );
+            return labrob::WholeBodyController(params, robot_model_, initial_robot_state, sample_time, armature);
         }),
         py::arg("params"),
-        py::arg("robot_model"),
+        py::arg("urdf_path"),
+        py::arg("mesh_dir"),
         py::arg("initial_robot_state"),
         py::arg("sample_time"),
         py::arg("armature")
