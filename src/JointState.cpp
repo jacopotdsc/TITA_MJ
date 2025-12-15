@@ -1,4 +1,5 @@
 #include <JointState.hpp>
+#include <stdexcept>
 
 namespace labrob {
 

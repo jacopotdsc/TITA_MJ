@@ -3,6 +3,7 @@ sys.path.insert(0, '/home/ubuntu/Desktop/repo_rl//TITA_MJ/compiled')
 
 import mpc
 import wbc
+import wm
 import numpy as np
 import pinocchio as pin
 import traceback

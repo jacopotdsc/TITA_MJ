@@ -7,7 +7,7 @@ bool WalkingManager::init(const labrob::RobotState& initial_robot_state,
                      std::map<std::string, double> &armatures) {
     
     // Read URDF from file:
-    std::string robot_description_filename = "../tita_description/tita.urdf";
+    std::string robot_description_filename = "tita_description/tita.urdf";
 
     // Build Pinocchio model and data from URDF:
     pinocchio::Model full_robot_model;

@@ -1,10 +1,15 @@
 #include <JointCommand.hpp>
+#include <stdexcept>
 
 namespace labrob {
 
 double
 JointCommand::operator[](const std::string& key) const {
-  return joint_command_.at(key);
+  auto it = joint_command_.find(key);
+  if (it == joint_command_.end()) {
+    return 0.0;
+  }
+  return it->second;
 }
 
 double&

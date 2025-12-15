@@ -47,6 +47,11 @@ PYBIND11_MODULE(wbc, m) {
         .def_readwrite("contact_points", &labrob::RobotState::contact_points)
         .def_readwrite("contact_forces", &labrob::RobotState::contact_forces);
 
+  py::class_<labrob::SE3>(m, "SE3")
+    .def(py::init<>())
+    .def_readwrite("p", &labrob::SE3::p)  
+    .def_readwrite("R", &labrob::SE3::R);
+
   py::class_<labrob::ee3>(m, "ee3")
       .def(py::init<>())
       .def_readwrite("pos", &labrob::ee3::pos)
@@ -123,6 +128,10 @@ PYBIND11_MODULE(wbc, m) {
                 joint_ids_to_lock,
                 pinocchio::neutral(full_robot_model)
             );
+
+            for (auto it = armature.begin(); it != armature.end(); ++it) {
+                std::cout << "Armature key: " << it->first << ", value: " << it->second << std::endl;
+            }
             return labrob::WholeBodyController(params, robot_model_, initial_robot_state, sample_time, armature);
         }),
         py::arg("params"),
@@ -134,11 +143,12 @@ PYBIND11_MODULE(wbc, m) {
       )
 
     .def("compute_inverse_dynamics", [](labrob::WholeBodyController &self,
-              const labrob::RobotState &robot_state,
-              const labrob::DesiredConfiguration &des_configuration) {
-              return self.compute_inverse_dynamics(robot_state, des_configuration);
-          },
-          py::arg("robot_state"), 
-          py::arg("des_configuration")
-        );
+            const labrob::RobotState &robot_state,
+            const labrob::DesiredConfiguration &des_configuration) { 
+            return self.compute_inverse_dynamics(robot_state, des_configuration);
+            
+        },
+        py::arg("robot_state"), 
+        py::arg("des_configuration")
+      );
 }

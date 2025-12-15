@@ -46,3 +46,6 @@ pip = "*"
 cmd = "pip install mujoco==2.3.2 mujoco-py"
 description = """Install MuJoCo python bindings via pip (optional). Ensure MuJoCo
 binaries are available under $HOME/mujoco or follow mujoco docs."""
+
+[tasks]
+wm = "python3 src/wm.py"

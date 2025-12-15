@@ -50,17 +50,7 @@ set(hpipm_LIBRARIES /home/ubuntu/.local/hpipm/lib/libhpipm.a)
 #include_directories(${BLASFEO_INCLUDE_DIR} ${HPIPM_INCLUDE_DIR})
 #include_directories(${PROJECT_SOURCE_DIR}/include $ENV{HOME}/.local/include)
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  $ENV{HOME}/.local/include
-)
-
-add_library(mpc MODULE
-    src/MPC.cpp
-    src/pybind_mpc.cpp
-)
-
-add_library(wbc MODULE
+add_library(wm MODULE
     src/JointCommand.cpp
     src/JointState.cpp
     src/MPC.cpp
@@ -69,22 +59,17 @@ add_library(wbc MODULE
     src/WalkingManager.cpp
     src/WholeBodyController.cpp
     src/utils.cpp 
-    src/pybind_wbc.cpp
+    src/wm_binding.cpp
+)
+target_include_directories(wm PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    $ENV{HOME}/.local/include
+    ${blasfeo_INCLUDE_DIRS}
+    ${hpipm_INCLUDE_DIRS}
 )
 
-# WBC
-target_link_libraries(mpc PRIVATE
-    pybind11::module
-    pinocchio::pinocchio
-    Eigen3::Eigen
-    $ENV{HOME}/.local/lib/libhpipm.a
-    $ENV{HOME}/.local/lib/libblasfeo.a
-)
-set_target_properties(mpc PROPERTIES 
-    PREFIX "")
-
-# WBC
-target_link_libraries(wbc PRIVATE
+# WM
+target_link_libraries(wm PRIVATE
     mujoco::mujoco
     pybind11::module
     pinocchio::pinocchio
@@ -93,9 +78,9 @@ target_link_libraries(wbc PRIVATE
     $ENV{HOME}/.local/lib/libblasfeo.a
 )
 
-set_target_properties(wbc PROPERTIES 
+set_target_properties(wm PROPERTIES 
     PREFIX ""
 )
 
-install(TARGETS mpc wbc
+install(TARGETS wm
         LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/compiled)
